@@ -60,7 +60,15 @@ class SpotifyAPI:
         return uri_list
 
     def _transform_new_releases(self, response):
-        return response
+        songs_dict = {'track_id': [], 'artist_name': [], 'song_name': []}
+        for track in response:
+            artist_name = [name['name'] for name in track['artists']]
+            song_name = track['name']
+            track_id = track['id']
+            songs_dict['track_id'].append(track_id)
+            songs_dict['song_name'].append(song_name)
+            songs_dict['artist_name'].append(artist_name)
+        return songs_dict
 
     def pull_album_tracks(self, uri_list):
         response = self._fetch_album_tracks(uri_list)
