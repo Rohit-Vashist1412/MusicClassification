@@ -14,7 +14,7 @@ class SpotifyAPI:
         uri = uri.split('/')[-1].split('?')[0].split(':')[-1]
         songs_dict = {'track_id': [], 'artist_name': [], 'song_name': []}
         offset = 0
-        limit = 100
+        limit = 50
         while True:
             items = self.sp.playlist_tracks(uri, offset=offset, limit=limit)
 
@@ -36,7 +36,7 @@ class SpotifyAPI:
     def pull_new_releases(self):
         uri_list = []
         offset = 0
-        limit = 100
+        limit = 50
         while True:
             albums = self.sp.new_releases(offset=offset, limit=limit)
             for album in albums['albums']['items']:
@@ -53,7 +53,7 @@ class SpotifyAPI:
         songs_dict = {'track_id': [], 'artist_name': [], 'song_name': []}
         uri_list = [uri.split('/')[-1].split('?')[0].split(':')[-1] for uri in uri_list]
         offset = 0
-        limit = 100
+        limit = 50
         while True:
             items = self.sp.albums(uri_list[offset:offset + limit])
 
