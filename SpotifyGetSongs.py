@@ -53,7 +53,7 @@ class SpotifyAPI:
         songs_dict = {'track_id': [], 'artist_name': [], 'song_name': []}
         uri_list = [uri.split('/')[-1].split('?')[0].split(':')[-1] for uri in uri_list]
         offset = 0
-        limit = 50
+        limit = 20
         while True:
             items = self.sp.albums(uri_list[offset:offset + limit])
 
