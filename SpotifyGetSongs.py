@@ -1,8 +1,22 @@
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
-
 class SpotifyAPI:
+    """
+    A class for interacting with the Spotify Web API to retrieve playlist tracks, new releases, and album tracks.
+
+    Args:
+        client_id (str): Your Spotify application's client ID.
+        client_secret (str): Your Spotify application's client secret.
+
+    Attributes:
+        client_id (str): Your Spotify application's client ID.
+        client_secret (str): Your Spotify application's client secret.
+        client_credentials_manager (spotipy.oauth2.SpotifyClientCredentials): Spotify client credentials manager.
+        sp (spotipy.Spotify): Spotify API client instance.
+
+    """
+
     def __init__(self, client_id, client_secret):
         self.client_id = client_id
         self.client_secret = client_secret
@@ -10,22 +24,43 @@ class SpotifyAPI:
                                                                    client_secret=self.client_secret)
         self.sp = spotipy.Spotify(client_credentials_manager=self.client_credentials_manager)
 
-    def _split_uri(self,uri):
-        'Takes the Spotify URL and splits it down to the URI which is needed for the API call'
+    def _split_uri(self, uri):
+        """
+        Extracts the Spotify track or playlist URI from a Spotify URL.
+
+        Args:
+            uri (str): Spotify URL.
+
+        Returns:
+            str: The Spotify track or playlist URI.
+
+        """
         return uri.split('/')[-1].split('?')[0].split(':')[-1]
 
+    def get_playlist_tracks(self, uri):
+        """
+        Retrieves tracks from a Spotify playlist.
 
-    def get_playlist_tracks(self,uri):
-        'Easy function to return the playlist tracks as a dict'
+        Args:
+            uri (str): Spotify playlist URI.
+
+        Returns:
+            dict: Dictionary containing track information, including track_id, artist_name, and song_name.
+
+        """
         return self._transform_playlist_tracks(uri)
-    
 
     def _fetch_playlist_tracks_json(self, uri):
-        '''Function that takes the URI and makes a call to the spotify API to fetch the full JSON response.
+        """
+        Fetches the JSON response of tracks from a Spotify playlist.
 
-        Returns a list of Json objects containing the required song data     
-        
-        '''
+        Args:
+            uri (str): Spotify playlist URI.
+
+        Returns:
+            list: List of JSON objects containing track data.
+
+        """
         uri = self._split_uri(uri)    
         offset = 0
         limit = 50
@@ -42,12 +77,17 @@ class SpotifyAPI:
         
         return json_list
     
-    def _transform_playlist_tracks(self,uri):
+    def _transform_playlist_tracks(self, uri):
+        """
+        Transforms the JSON response of playlist tracks into a dictionary.
 
-        ''' Transforms the Json response into a dict and returns the song name track id and artist name 
-        
-        Will add further metrics such as genre, BPM and length '''
+        Args:
+            uri (str): Spotify playlist URI.
 
+        Returns:
+            dict: Dictionary containing track information, including track_id, artist_name, and song_name.
+
+        """
         response  = self._fetch_playlist_tracks_json(uri)
 
         songs_dict = {'track_id': [], 'artist_name': [], 'song_name': []}
@@ -63,10 +103,14 @@ class SpotifyAPI:
 
         return songs_dict
     
-    
     def _fetch_new_release_json(self):
-        '''Fetch the Json response of new album releases. Returns a list of json objects containing the albums recently released'''
+        """
+        Fetches the JSON response of new album releases from Spotify.
 
+        Returns:
+            list: List of JSON objects containing information about recently released albums.
+
+        """
         albums_list = []
         offset = 0
         limit = 50
@@ -81,9 +125,14 @@ class SpotifyAPI:
 
         return albums_list
     
-
     def _transform_new_releases_to_list(self):
+        """
+        Transforms the JSON response of new album releases into a list of album URIs.
 
+        Returns:
+            list: List of Spotify album URIs.
+
+        """
         uri_list = []
 
         response_list = self._fetch_new_release_json() 
@@ -95,10 +144,26 @@ class SpotifyAPI:
         return uri_list
                 
     def get_new_releases(self):
+        """
+        Retrieves a list of new album releases on Spotify.
 
+        Returns:
+            list: List of Spotify album URIs.
+
+        """
         return self._transform_new_releases_to_list()        
 
     def pull_album_tracks(self, uri_list):
+        """
+        Retrieves tracks from a list of Spotify album URIs.
+
+        Args:
+            uri_list (list): List of Spotify album URIs.
+
+        Returns:
+            dict: Dictionary containing track information, including track_id, artist_name, and song_name.
+
+        """
         songs_dict = {'track_id': [], 'artist_name': [], 'song_name': []}
         uri_list = [uri.split('/')[-1].split('?')[0].split(':')[-1] for uri in uri_list]
         offset = 0
