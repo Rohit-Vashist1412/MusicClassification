@@ -1,6 +1,7 @@
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 import time
+import re 
 
 class SpotifyAPI:
     """
@@ -36,7 +37,10 @@ class SpotifyAPI:
             str: The Spotify track or playlist URI.
 
         """
-        return uri.split('/')[-1].split('?')[0].split(':')[-1]
+        if not re.search('spotify.com\/playlist\/.*', uri):
+            raise Exception("Invalid Spotify playlist URI")
+        else:
+            return uri.split('/')[-1].split('?')[0].split(':')[-1]
 
     def get_playlist_tracks(self, uri):
         """
