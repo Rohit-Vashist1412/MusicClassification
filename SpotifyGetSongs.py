@@ -1,5 +1,7 @@
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
+import time
+import re 
 
 class SpotifyAPI:
     """
@@ -35,7 +37,10 @@ class SpotifyAPI:
             str: The Spotify track or playlist URI.
 
         """
-        return uri.split('/')[-1].split('?')[0].split(':')[-1]
+        if not re.search('spotify.com\/playlist\/.*', uri):
+            raise Exception("Invalid Spotify playlist URI")
+        else:
+            return uri.split('/')[-1].split('?')[0].split(':')[-1]
 
     def get_playlist_tracks(self, uri):
         """
@@ -59,7 +64,6 @@ class SpotifyAPI:
 
         Returns:
             list: List of JSON objects containing track data.
-
         """
         uri = self._split_uri(uri)    
         offset = 0
@@ -67,12 +71,17 @@ class SpotifyAPI:
         json_list = []
         
         while True:
-            items = self.sp.playlist_items(uri, offset=offset, limit=limit)
-            json_list.append(items)
-        
-            if items['next']:
-                offset += limit
-            else:
+            try:
+                items = self.sp.playlist_items(uri, offset=offset, limit=limit)
+                json_list.append(items)
+                if items['next']:
+                    offset += limit
+                    time.sleep(0.1)  # Adding a small delay to avoid rate limiting
+                else:
+                    break
+            except spotipy.SpotifyException as e:
+                # Handle rate limiting or other API errors
+                print("Error: ", e)
                 break
         
         return json_list
@@ -115,12 +124,18 @@ class SpotifyAPI:
         offset = 0
         limit = 50
         while True:
-            albums = self.sp.new_releases(offset=offset, limit=limit)
-            albums_list.append(albums)
+            try:
+                albums = self.sp.new_releases(offset=offset, limit=limit)
+                albums_list.append(albums)
 
-            if albums['albums']['next']:
-                offset += limit
-            else:
+                if albums['albums']['next']:
+                    offset += limit
+                    time.sleep(0.1)  # Adding a small delay to avoid rate limiting
+                else:
+                    break
+            except spotipy.SpotifyException as e:
+                # Handle rate limiting or other API errors
+                print("Error: ", e)
                 break
 
         return albums_list
@@ -162,27 +177,31 @@ class SpotifyAPI:
 
         Returns:
             dict: Dictionary containing track information, including track_id, artist_name, and song_name.
-
         """
         songs_dict = {'track_id': [], 'artist_name': [], 'song_name': []}
-        uri_list = [uri.split('/')[-1].split('?')[0].split(':')[-1] for uri in uri_list]
+        uri_list = [self._split_uri for uri in uri_list]
         offset = 0
         limit = 20
         while True:
-            items = self.sp.albums(uri_list[offset:offset + limit])
+            try:  
+                items = self.sp.albums(uri_list[offset:offset + limit])
 
-            for item in items['albums']:
-                for track in item['tracks']['items']:
-                    song_name = track['name']
-                    track_id = track['id']
-                    artist_name = [name['name'] for name in track['artists']]
-                    songs_dict['track_id'].append(track_id)
-                    songs_dict['song_name'].append(song_name)
-                    songs_dict['artist_name'].append(artist_name)
+                for item in items['albums']:
+                    for track in item['tracks']['items']:
+                        song_name = track['name']
+                        track_id = track['id']
+                        artist_name = [name['name'] for name in track['artists']]
+                        songs_dict['track_id'].append(track_id)
+                        songs_dict['song_name'].append(song_name)
+                        songs_dict['artist_name'].append(artist_name)
 
-            if len(uri_list) > offset + limit:
-                offset += limit
-            else:
+                if len(uri_list) > offset + limit:
+                    offset += limit
+                    time.sleep(0.1)
+                else:
+                    break
+            except spotipy.SpotifyException as e:
+                # Handle rate limiting or other API errors
+                print("Error: ", e)
                 break
-
-        return songs_dict
+            return songs_dict
